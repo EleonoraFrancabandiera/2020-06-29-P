@@ -1,6 +1,8 @@
 package it.polito.tdp.PremierLeague.model;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Match {
 	Integer matchID;
@@ -15,6 +17,8 @@ public class Match {
 
 	LocalDateTime date;
 	
+	Set<Integer> giocatoriMinMinuti;
+	
 	public Match(Integer matchID, Integer teamHomeID, Integer teamAwayID, Integer teamHomeFormation,
 			Integer teamAwayFormation, Integer resultOfTeamHome, LocalDateTime date, String teamHomeNAME, String teamAwayNAME) {
 		super();
@@ -27,8 +31,17 @@ public class Match {
 		this.teamHomeNAME = teamHomeNAME;
 		this.teamAwayNAME = teamAwayNAME;
 		this.date = date;
+		this.giocatoriMinMinuti = new HashSet<>();
 	}
 	
+	public Set<Integer> getGiocatoriMinMinuti() {
+		return giocatoriMinMinuti;
+	}
+
+	public void addGiocatoreMinMinuti(int giocatoreId) {
+		this.giocatoriMinMinuti.add(giocatoreId);
+	}
+
 	public Integer getMatchID() {
 		return matchID;
 	}

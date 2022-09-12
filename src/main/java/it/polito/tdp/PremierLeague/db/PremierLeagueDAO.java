@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.PremierLeague.model.Action;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
@@ -60,24 +62,51 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List<Match> listAllMatches(){
+	public void listAllMatches(Map<Integer, Match> idMap){
 		String sql = "SELECT m.MatchID, m.TeamHomeID, m.TeamAwayID, m.teamHomeFormation, m.teamAwayFormation, m.resultOfTeamHome, m.date, t1.Name, t2.Name   "
 				+ "FROM Matches m, Teams t1, Teams t2 "
 				+ "WHERE m.TeamHomeID = t1.TeamID AND m.TeamAwayID = t2.TeamID";
-		List<Match> result = new ArrayList<Match>();
+		
 		Connection conn = DBConnect.getConnection();
 
 		try {
 			PreparedStatement st = conn.prepareStatement(sql);
 			ResultSet res = st.executeQuery();
 			while (res.next()) {
-
-				
+				if(!idMap.containsKey(res.getInt("m.MatchID"))){
 				Match match = new Match(res.getInt("m.MatchID"), res.getInt("m.TeamHomeID"), res.getInt("m.TeamAwayID"), res.getInt("m.teamHomeFormation"), 
 							res.getInt("m.teamAwayFormation"),res.getInt("m.resultOfTeamHome"), res.getTimestamp("m.date").toLocalDateTime(), res.getString("t1.Name"),res.getString("t2.Name"));
+				idMap.put(match.getMatchID(), match);
+				}
 				
-				
-				result.add(match);
+
+			}
+			conn.close();
+			
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+	}
+	
+	public List<Match> getVertici(int mese, Map<Integer, Match> idMap){
+		String sql = "SELECT m.MatchID "
+				+ "FROM matches m "
+				+ "WHERE Month(m.Date)= ?";
+		
+		List<Match> result = new ArrayList<Match>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, mese);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+				Match m = idMap.get(res.getInt("m.MatchID"));
+				if(m!=null) {
+					result.add(m);
+				}				
 
 			}
 			conn.close();
@@ -85,7 +114,36 @@ public class PremierLeagueDAO {
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null;
+			throw new RuntimeException("SQL Error");
+		}
+	}
+	
+	public void aggiungiGiocatoriMatch(int minuti, List<Match> vertici) {
+		String sql = "SELECT a.PlayerID "
+				+ "FROM actions a "
+				+ "WHERE a.MatchID= ? AND a.TimePlayed>=?";
+		
+		
+		
+		for(Match match : vertici) {
+
+			try {
+				Connection conn = DBConnect.getConnection();
+				PreparedStatement st = conn.prepareStatement(sql);
+				st.setInt(1, match.getMatchID());
+				st.setInt(2, minuti);
+				ResultSet res = st.executeQuery();
+				
+				while (res.next()) {
+					match.addGiocatoreMinMinuti(res.getInt("a.PlayerID"));	
+				}
+				conn.close();			
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+				throw new RuntimeException("SQL Error");
+			}
+		
 		}
 	}
 	
